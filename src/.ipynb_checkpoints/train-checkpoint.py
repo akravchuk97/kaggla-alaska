@@ -99,7 +99,10 @@ def train(
         model: torch.nn.Module,
         train_loader: DataLoader,
         valid_loader: DataLoader,
-        config: Config,    
+        config: Config,
+        train_loaders=None,
+        use_sm_b=False,
+    
 ) -> None:
     model.to(config.device)
     experiment_path = os.path.join(config.experiments_root, config.experiment_name)
@@ -143,5 +146,9 @@ if __name__ == '__main__':
     train_dataset, valid_dataset = get_train_val_datasets(config)
     train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=True, num_workers=config.n_work)
     valid_loader = DataLoader(valid_dataset, batch_size=config.batch_size, shuffle=False, num_workers=config.n_work)
+    train_loaders = [
+        DataLoader(train_dataset, batch_size=2 ** i, shuffle=True, num_workers=config.n_work)
+        for i in range(3, 6) if 2 ** i < config.batch_size
+    ]
 
-    train(config.model, train_loader, valid_loader, config)
+    train(config.model, train_loader, valid_loader, config, train_loaders=train_loaders, use_sm_b=config.use_sm_b)
