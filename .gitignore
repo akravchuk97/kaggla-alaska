@@ -8,3 +8,4 @@ __pycache__
 *.out
 jpegio
 *.ipynb_checkpoints
+src/.ipynb_checkpoints
