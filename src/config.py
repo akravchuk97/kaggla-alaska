@@ -1,28 +1,26 @@
 import typing as tp
-
 from dataclasses import dataclass
+
 from torch import nn
 from torch.nn import CrossEntropyLoss
+from torch.optim import AdamW
+from torch.optim.lr_scheduler import _LRScheduler, CosineAnnealingLR
 from torch.optim.optimizer import Optimizer
-from torch.optim import Adam, AdamW
-from torch.optim.lr_scheduler import _LRScheduler, ReduceLROnPlateau, CosineAnnealingLR
-from torch.nn.modules.loss import BCEWithLogitsLoss
-from models import get_model, enetb2_cls, enetb3_cls, enetb2, enetb3
+
 from metrics import alaska_weighted_auc
-from losses import FocalLoss
-from adam_gcc import Adam_GCC2, AdamW_GCC2
+from models import enetb2
 
 rlr_kw = {
     'patience': 3,
     'factor': 0.5,
     'mode': 'max',
-    'verbose': True,
 }
 
 cos_an_kw = {
     'T_max': 5,
     'eta_min': 1e-5,
 }
+
 
 @dataclass
 class Config:
@@ -45,9 +43,7 @@ class Config:
     data_path: str
     fold_num: int
     df_folds_path: str
-    use_sm_b: bool
     use_qual: bool
-    accum_steps: int
 
 
 config = Config(
@@ -58,7 +54,7 @@ config = Config(
     scheduler_kwargs=cos_an_kw,
     batch_size=40,
     lr=5e-4,
-    n_epochs=300,
+    n_epochs=90,
     seed=42,
     n_work=16,
     device='cuda',
@@ -70,8 +66,5 @@ config = Config(
     data_path='/home/data/alaska',
     fold_num=0,
     df_folds_path='../df_folds.csv',
-    use_sm_b=False,
-    use_qual=False, 
-    accum_steps=1,
+    use_qual=False,
 )
-

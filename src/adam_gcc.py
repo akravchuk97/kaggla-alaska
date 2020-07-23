@@ -1,4 +1,5 @@
 import math
+
 import torch
 from torch.optim.optimizer import Optimizer
 
@@ -177,8 +178,8 @@ class Adam_GCC2(Optimizer):
                     p.data.add_(-p.data.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True)).add_(
                         weight_mean)
         return loss
-    
-    
+
+
 class AdamW(Optimizer):
     """Implements Adam algorithm.
     It has been proposed in `Adam: A Method for Stochastic Optimization`_.
@@ -276,10 +277,9 @@ class AdamW(Optimizer):
                 step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
 
                 # p.data.addcdiv_(-step_size, exp_avg, denom)
-                p.data.add_(-step_size,  torch.mul(p.data, group['weight_decay']).addcdiv_(1, exp_avg, denom) )
+                p.data.add_(-step_size, torch.mul(p.data, group['weight_decay']).addcdiv_(1, exp_avg, denom))
 
         return loss
-
 
 
 class AdamW_GCC(Optimizer):
@@ -340,9 +340,9 @@ class AdamW_GCC(Optimizer):
                     max_exp_avg_sq = state['max_exp_avg_sq']
                 beta1, beta2 = group['betas']
 
-                #GC operation for Conv layers
-                if len(list(grad.size()))>3:                    
-                   grad.add_(-grad.mean(dim = tuple(range(1,len(list(grad.size())))), keepdim = True))
+                # GC operation for Conv layers
+                if len(list(grad.size())) > 3:
+                    grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
 
                 state['step'] += 1
 
@@ -365,10 +365,11 @@ class AdamW_GCC(Optimizer):
                 step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
 
                 # p.data.addcdiv_(-step_size, exp_avg, denom)
-                p.data.add_(-step_size,  torch.mul(p.data, group['weight_decay']).addcdiv_(1, exp_avg, denom) )
+                p.data.add_(-step_size, torch.mul(p.data, group['weight_decay']).addcdiv_(1, exp_avg, denom))
 
         return loss
-    
+
+
 class AdamW_GCC2(Optimizer):
 
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8,
@@ -427,10 +428,10 @@ class AdamW_GCC2(Optimizer):
                     max_exp_avg_sq = state['max_exp_avg_sq']
                 beta1, beta2 = group['betas']
 
-                #GC operation for Conv layers
-                if len(list(grad.size()))>3:     
-                   weight_mean=p.data.mean(dim = tuple(range(1,len(list(grad.size())))), keepdim = True)
-                   grad.add_(-grad.mean(dim = tuple(range(1,len(list(grad.size())))), keepdim = True))
+                # GC operation for Conv layers
+                if len(list(grad.size())) > 3:
+                    weight_mean = p.data.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True)
+                    grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
 
                 state['step'] += 1
 
@@ -453,18 +454,16 @@ class AdamW_GCC2(Optimizer):
                 step_size = group['lr'] * math.sqrt(bias_correction2) / bias_correction1
 
                 # GC operation for Conv layers
-                if len(list(grad.size()))>3:
-                  delta=(step_size*torch.mul(p.data, group['weight_decay']).addcdiv_(1, exp_avg, denom)).clone()
-                  delta.add_(-delta.mean(dim = tuple(range(1,len(list(grad.size())))), keepdim = True))
-                  p.data.add_(-delta)
+                if len(list(grad.size())) > 3:
+                    delta = (step_size * torch.mul(p.data, group['weight_decay']).addcdiv_(1, exp_avg, denom)).clone()
+                    delta.add_(-delta.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
+                    p.data.add_(-delta)
                 else:
-                  p.data.add_(-step_size,  torch.mul(p.data, group['weight_decay']).addcdiv_(1, exp_avg, denom) )
-                
-               
+                    p.data.add_(-step_size, torch.mul(p.data, group['weight_decay']).addcdiv_(1, exp_avg, denom))
+
         return loss
-    
-    
-    
+
+
 class RAdam_GCC(Optimizer):
 
     def __init__(self, params, lr=1e-3, betas=(0.9, 0.999), eps=1e-8, weight_decay=0, degenerated_to_sgd=True):
@@ -476,13 +475,14 @@ class RAdam_GCC(Optimizer):
             raise ValueError("Invalid beta parameter at index 0: {}".format(betas[0]))
         if not 0.0 <= betas[1] < 1.0:
             raise ValueError("Invalid beta parameter at index 1: {}".format(betas[1]))
-        
+
         self.degenerated_to_sgd = degenerated_to_sgd
         if isinstance(params, (list, tuple)) and len(params) > 0 and isinstance(params[0], dict):
             for param in params:
                 if 'betas' in param and (param['betas'][0] != betas[0] or param['betas'][1] != betas[1]):
                     param['buffer'] = [[None, None, None] for _ in range(10)]
-        defaults = dict(lr=lr, betas=betas, eps=eps, weight_decay=weight_decay, buffer=[[None, None, None] for _ in range(10)])
+        defaults = dict(lr=lr, betas=betas, eps=eps, weight_decay=weight_decay,
+                        buffer=[[None, None, None] for _ in range(10)])
         super(RAdam_GCC, self).__init__(params, defaults)
 
     def __setstate__(self, state):
@@ -534,7 +534,9 @@ class RAdam_GCC(Optimizer):
 
                     # more conservative since it's an approximated value
                     if N_sma >= 5:
-                        step_size = math.sqrt((1 - beta2_t) * (N_sma - 4) / (N_sma_max - 4) * (N_sma - 2) / N_sma * N_sma_max / (N_sma_max - 2)) / (1 - beta1 ** state['step'])
+                        step_size = math.sqrt(
+                            (1 - beta2_t) * (N_sma - 4) / (N_sma_max - 4) * (N_sma - 2) / N_sma * N_sma_max / (
+                                    N_sma_max - 2)) / (1 - beta1 ** state['step'])
                     elif self.degenerated_to_sgd:
                         step_size = 1.0 / (1 - beta1 ** state['step'])
                     else:
@@ -553,8 +555,8 @@ class RAdam_GCC(Optimizer):
                         p_data_fp32.add_(-group['weight_decay'] * group['lr'], p_data_fp32)
                     p_data_fp32.add_(-step_size * group['lr'], exp_avg)
                     p.data.copy_(p_data_fp32)
-                    
-                if len(list(grad.size()))>3:                    
-                    grad.add_(-grad.mean(dim = tuple(range(1,len(list(grad.size())))), keepdim = True))
+
+                if len(list(grad.size())) > 3:
+                    grad.add_(-grad.mean(dim=tuple(range(1, len(list(grad.size())))), keepdim=True))
 
         return loss

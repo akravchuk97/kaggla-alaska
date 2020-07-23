@@ -1,4 +1,5 @@
 import os
+import typing as tp
 
 import cv2
 import numpy as np
@@ -14,13 +15,14 @@ def _onehot(size, target):
     return vec
 
 
-def preprocess(im: np.ndarray) -> np.ndarray:
+def _preprocess(im: np.ndarray) -> np.ndarray:
     im = im.astype(np.float32)
     im /= 255
     im = np.transpose(im, (2, 0, 1))
     im -= np.array([0.485, 0.456, 0.406])[:, None, None]
     im /= np.array([0.229, 0.224, 0.225])[:, None, None]
     return im
+
 
 _qal2target = {
     75: 0,
@@ -69,15 +71,15 @@ class ClassificationDataset:
         return len(self.df)
 
 
-def get_train_val_datasets(config: Config):
+def get_train_val_datasets(config: Config) -> tp.Tuple[ClassificationDataset, ClassificationDataset]:
     df = pd.read_csv(config.df_folds_path)
     df_train, df_val = df[df['fold'] != config.fold_num], df[df['fold'] == config.fold_num]
     df_train = df_train.reset_index(drop=True)
     df_val = df_val.reset_index(drop=True)
 
-    train_dataset = ClassificationDataset(df_train, get_training_augmentation(), preprocess=preprocess, mode='train',
+    train_dataset = ClassificationDataset(df_train, get_training_augmentation(), preprocess=_preprocess, mode='train',
                                           data_root=config.data_path, use_qual=config.use_qual)
-    val_dataset = ClassificationDataset(df_val, get_validation_augmentation(), preprocess=preprocess, mode='val',
+    val_dataset = ClassificationDataset(df_val, get_validation_augmentation(), preprocess=_preprocess, mode='val',
                                         data_root=config.data_path, use_qual=False)
 
     return train_dataset, val_dataset
