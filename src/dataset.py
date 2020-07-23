@@ -70,7 +70,6 @@ class ClassificationDataset:
 
 
 def get_train_val_datasets(config: Config):
-    """"""
     df = pd.read_csv(config.df_folds_path)
     df_train, df_val = df[df['fold'] != config.fold_num], df[df['fold'] == config.fold_num]
     df_train = df_train.reset_index(drop=True)

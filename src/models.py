@@ -27,10 +27,14 @@ class Model(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-def enet():
+def enetb2():
+    net = EfficientNet.from_pretrained('efficientnet-b2')
+    net._fc = nn.Linear(in_features=1408, out_features=4, bias=True)
+    return net
+
+def enetb3():
     net = EfficientNet.from_pretrained('efficientnet-b3')
     net._fc = nn.Linear(in_features=1536, out_features=4, bias=True)
-    #net._fc = nn.Linear(in_features=1408, out_features=4, bias=True)
     return net
 
 def enetb2_cls(idx=12):

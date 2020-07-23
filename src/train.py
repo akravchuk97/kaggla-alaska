@@ -11,7 +11,7 @@ import cv2
 
 from config import config, Config
 from dataset import get_train_val_datasets
-from utils import write2log, make_logdirs_if_needit
+from utils import write2log, make_logdirs_if_needit, make_os_settings
 from copy import deepcopy
 from torch.optim.lr_scheduler import _LRScheduler, ReduceLROnPlateau, CosineAnnealingLR
 
@@ -20,7 +20,7 @@ from losses import FocalLoss
 qal_loss = FocalLoss()
 
 
-def validate(predicts, labels, single_metric: Callable):
+def validate(predicts: np.ndarray, labels: np.ndarray, single_metric: Callable):
     return single_metric(labels, predicts)
 
 
@@ -37,7 +37,6 @@ def train_epoch(
     pbar = tqdm(enumerate(loader), total=len(loader))
     sum_loss = 0
     for batch_num, batch in pbar:
-        optimizer.zero_grad()
         if not use_qual:
             im, t0 = batch
         else:
@@ -55,9 +54,10 @@ def train_epoch(
             loss = criterion(pred0, t0)
         if use_qual:
             loss1 = qal_loss(pred_qual, t1)
-            loss = loss + 0.2 * loss1
+            loss = loss +  loss1
         loss.backward()
         optimizer.step()
+        optimizer.zero_grad()
 
         sum_loss += loss.item()
         pbar.set_description(f'Loss: {sum_loss / (batch_num + 1)}')
@@ -109,30 +109,23 @@ def train(
     optimizer = config.optimizer(model.parameters(), lr=config.lr)
     scheduler = config.scheduler(optimizer, **config.scheduler_kwargs)
     max_score = 0
-    num_bad_epochs = 0
-    num_loader = 0
     use_big = False
     for epoch in range(config.n_epochs):
         train_epoch(model, train_loader, optimizer, criterion, config.device, use_qual=config.use_qual)
         metric = valid_epoch(model, valid_loader, config.device,
                              config.single_metric, criterion, use_qual=config.use_qual)
-            
-        tmp_lr = optimizer.state_dict()['param_groups'][0]['lr']
         if isinstance(scheduler, CosineAnnealingLR):
             scheduler.step()
         else:
             scheduler.step(metric)
-        torch.save({'st_d': model.state_dict()}, os.path.join(models_path, f'{epoch}.pth'))
         if metric > max_score:
             max_score = metric
             model.eval()
             torch.save({'st_d': model.state_dict()}, os.path.join(models_path, 'best.pth'))
-        write2log(os.path.join(experiment_path, log_name), epoch, metric, tmp_lr)
+        write2log(os.path.join(experiment_path, log_name), epoch, metric, optimizer.state_dict()['param_groups'][0]['lr'])
 
 
-def make_os_settings(cuda_num: str) -> None:
-    os.environ['CUDA_VISIBLE_DEVICES'] = cuda_num
-    os.environ['CUDA_DEVICE_ORDER'] = 'PCI_BUS_ID'
+
 
 
 if __name__ == '__main__':
