@@ -7,4 +7,4 @@ __pycache__
 *.pth
 *.out
 jpegio
-src/.ipynb_checkpoints
+*.ipynb_checkpoints

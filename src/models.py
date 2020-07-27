@@ -1,12 +1,8 @@
-import os
-
-from torch import nn
-from pretrainedmodels import se_resnext50_32x4d
-
-from effnet import EffnetClassifier
 from efficientnet_pytorch import EfficientNet
-from effnet_cls import EfficientNetAddCls
+from pretrainedmodels import se_resnext50_32x4d
+from torch import nn
 
+from effnet_cls import EfficientNetAddCls
 
 _idx2n_units = {
     6: 48,
@@ -27,11 +23,18 @@ class Model(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-def enet():
+
+def enetb2():
+    net = EfficientNet.from_pretrained('efficientnet-b2')
+    net._fc = nn.Linear(in_features=1408, out_features=4, bias=True)
+    return net
+
+
+def enetb3():
     net = EfficientNet.from_pretrained('efficientnet-b3')
     net._fc = nn.Linear(in_features=1536, out_features=4, bias=True)
-    #net._fc = nn.Linear(in_features=1408, out_features=4, bias=True)
     return net
+
 
 def enetb2_cls(idx=12):
     mdl = EfficientNetAddCls.from_pretrained('efficientnet-b2')
@@ -40,13 +43,10 @@ def enetb2_cls(idx=12):
     mdl.lin = nn.Linear(120, 3)
     return mdl
 
+
 def enetb3_cls(idx=12):
     mdl = EfficientNetAddCls.from_pretrained('efficientnet-b3')
     mdl.idx = idx
     mdl._fc = nn.Linear(in_features=1536, out_features=4, bias=True)
     mdl.lin = nn.Linear(_idx2n_units[idx], 3)
     return mdl
-
-
-def get_model(n_classes=4):
-    return enet()#Model(n_classes=n_classes)

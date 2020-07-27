@@ -1,23 +1,26 @@
 import typing as tp
-
 from dataclasses import dataclass
+
 from torch import nn
 from torch.nn import CrossEntropyLoss
+from torch.optim import AdamW
+from torch.optim.lr_scheduler import _LRScheduler, CosineAnnealingLR
 from torch.optim.optimizer import Optimizer
-from torch.optim import Adam, AdamW
-from torch.optim.lr_scheduler import _LRScheduler, ReduceLROnPlateau
-from torch.nn.modules.loss import BCEWithLogitsLoss
-from models import get_model, enetb2_cls, enetb3_cls
+
 from metrics import alaska_weighted_auc
-from losses import FocalLoss
-from adam_gcc import Adam_GCC2, AdamW_GCC2
+from models import enetb2
 
 rlr_kw = {
     'patience': 3,
     'factor': 0.5,
     'mode': 'max',
-    'verbose': True,
 }
+
+cos_an_kw = {
+    'T_max': 5,
+    'eta_min': 1e-5,
+}
+
 
 @dataclass
 class Config:
@@ -40,31 +43,28 @@ class Config:
     data_path: str
     fold_num: int
     df_folds_path: str
-    use_sm_b: bool
     use_qual: bool
 
 
 config = Config(
-    model=enetb3_cls(idx=12),
-    optimizer=Adam_GCC2,
+    model=enetb2(),
+    optimizer=AdamW,
     loss=CrossEntropyLoss(),
-    scheduler=ReduceLROnPlateau,
-    scheduler_kwargs=rlr_kw,
-    batch_size=32,
+    scheduler=CosineAnnealingLR,
+    scheduler_kwargs=cos_an_kw,
+    batch_size=40,
     lr=5e-4,
-    n_epochs=150,
+    n_epochs=90,
     seed=42,
-    n_work=12,
+    n_work=16,
     device='cuda',
-    cuda_num='6',
+    cuda_num='1',
     log_name='log',
-    experiment_name='effnet-b3-qual-12-ce-gcc-fullds',
+    experiment_name='effnet-b2-fullds-adamw-cos-fold0',
     experiments_root='experiments',
     single_metric=alaska_weighted_auc,
     data_path='/home/data/alaska',
-    fold_num=6,
-    df_folds_path='../folds_with_qual.csv',
-    use_sm_b=False,
-    use_qual= True, 
+    fold_num=0,
+    df_folds_path='../df_folds.csv',
+    use_qual=False,
 )
-
