@@ -45,7 +45,6 @@ class Config:
     df_folds_path: str
     use_qual: bool
 
-
 config = Config(
     model=enetb2(),
     optimizer=AdamW,
@@ -68,3 +67,4 @@ config = Config(
     df_folds_path='../df_folds.csv',
     use_qual=False,
 )
+

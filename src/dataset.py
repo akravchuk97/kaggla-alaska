@@ -15,7 +15,7 @@ def _onehot(size, target):
     return vec
 
 
-def _preprocess(im: np.ndarray) -> np.ndarray:
+def preprocess(im: np.ndarray) -> np.ndarray:
     im = im.astype(np.float32)
     im /= 255
     im = np.transpose(im, (2, 0, 1))
@@ -61,7 +61,8 @@ class ClassificationDataset:
             image = self.augmentation(image=image)['image']
         if self.preprocess:
             image = self.preprocess(image)
-
+        if self.mode == 'test':
+            return image
         target = _onehot(4, label)
         if self.use_qual:
             return image, target, qal_targ
@@ -77,9 +78,9 @@ def get_train_val_datasets(config: Config) -> tp.Tuple[ClassificationDataset, Cl
     df_train = df_train.reset_index(drop=True)
     df_val = df_val.reset_index(drop=True)
 
-    train_dataset = ClassificationDataset(df_train, get_training_augmentation(), preprocess=_preprocess, mode='train',
+    train_dataset = ClassificationDataset(df_train, get_training_augmentation(), preprocess=preprocess, mode='train',
                                           data_root=config.data_path, use_qual=config.use_qual)
-    val_dataset = ClassificationDataset(df_val, get_validation_augmentation(), preprocess=_preprocess, mode='val',
+    val_dataset = ClassificationDataset(df_val, get_validation_augmentation(), preprocess=preprocess, mode='val',
                                         data_root=config.data_path, use_qual=False)
 
     return train_dataset, val_dataset
