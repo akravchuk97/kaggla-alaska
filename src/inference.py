@@ -6,6 +6,7 @@ import torch
 import ttach as tta
 from torch import nn
 from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 from augmentations import get_validation_augmentation
 from dataset import ClassificationDataset, preprocess
@@ -14,8 +15,8 @@ from utils import make_os_settings
 
 
 class ModelWrapper(nn.Module):
-    """Обертка над моделью, которая приводит модели с выходом под классификацию к обычной модели с одним выходом,
-    а форвард модели без выхода под классификацию не меняет."""
+    """Обертка над моделью, которая приводит модели с выходом под классификацию
+    к обычной модели с одним выходом, а форвард модели без выхода под классификацию не меняет."""
 
     def __init__(self, model):
         super().__init__()
@@ -71,7 +72,7 @@ def _get_inference_dataset(config: InferenceConfig) -> ClassificationDataset:
 
 def _predict(loader: DataLoader, model: nn.Module) -> tp.List[float]:
     predicts = []
-    for batch in loader:
+    for batch in tqdm(loader):
         with torch.no_grad():
             batch_predict = model(batch.to('cuda'))
         batch_predict = 1 - nn.functional.softmax(batch_predict, dim=1).data.cpu().numpy()[:, 0]
